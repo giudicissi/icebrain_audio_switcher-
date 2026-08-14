@@ -1,0 +1,62 @@
+using System;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+
+namespace AudioSwitcherApp
+{
+    public class GlobalHotkey : IDisposable
+    {
+        [DllImport("user32.dll")]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
+
+        [DllImport("user32.dll")]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+        private int modifier;
+        private int key;
+        private IntPtr hWnd;
+        private int id;
+        public bool Registered { get; private set; }
+
+        public GlobalHotkey(int modifier, Keys key, Form form, int id)
+        {
+            this.modifier = modifier;
+            this.key = (int)key;
+            this.hWnd = form.Handle;
+            this.id = id;
+        }
+
+        public bool Register()
+        {
+            if (Registered) return true;
+            Registered = RegisterHotKey(hWnd, id, modifier, key);
+            return Registered;
+        }
+
+        public bool Unregister()
+        {
+            if (!Registered) return true;
+            bool res = UnregisterHotKey(hWnd, id);
+            if (res) Registered = false;
+            return res;
+        }
+
+        public void Dispose()
+        {
+            Unregister();
+        }
+    }
+
+    public static class Constants
+    {
+        // modifiers
+        public const int NOMOD = 0x0000;
+        public const int ALT = 0x0001;
+        public const int CTRL = 0x0002;
+        public const int SHIFT = 0x0004;
+        public const int WIN = 0x0008;
+
+        // windows message id for hotkey
+        public const int WM_HOTKEY_MSG_ID = 0x0312;
+    }
+}
